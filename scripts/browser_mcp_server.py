@@ -24,7 +24,7 @@ async def get_page():
     global _browser, _page
     if _page is None:
         p = await async_playwright().__aenter__()
-        _browser = await p.chromium.launch(headless=True)
+        _browser = await p.chromium.launch(headless=False)
         _page = await _browser.new_page()
     return _page
 

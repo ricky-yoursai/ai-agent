@@ -12,7 +12,10 @@
       "Bash(timeout 5)",
       "Bash(curl -s http://localhost:8000/)",
       "Bash(./env/Scripts/python -c ' *)",
-      "Bash(PYTHONIOENCODING=utf-8 ./env/Scripts/python -c ' *)"
+      "Bash(PYTHONIOENCODING=utf-8 ./env/Scripts/python -c ' *)",
+      "PowerShell(Set-Location *)",
+      "Bash(pkill -f \"chat_server\\\\|server.py\")",
+      "PowerShell(.\\\\env\\\\Scripts\\\\python -c \"import uvicorn; import fastapi; import playwright; import anthropic; print\\('All dependencies OK'\\)\")"
     ]
   }
 }
