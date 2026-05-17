@@ -1,5 +1,18 @@
 {
   "env": {
     "ANTHROPIC_BASE_URL": "https://api.deepseek.com/anthropic"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(./env/Scripts/python -m pip install fastapi uvicorn websockets playwright)",
+      "Bash(./env/Scripts/python -m playwright install chromium)",
+      "Bash(./env/Scripts/python -c \"from playwright.sync_api import sync_playwright; print\\('playwright 可用'\\)\")",
+      "Bash(./env/Scripts/python -c \"import sys; sys.path.insert\\(0, '.'\\); from src.server import app; print\\('FastAPI app loaded OK'\\)\")",
+      "Bash(./env/Scripts/python -m uvicorn src.server:app --host 0.0.0.0 --port 8000)",
+      "Bash(timeout 5)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(./env/Scripts/python -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 ./env/Scripts/python -c ' *)"
+    ]
   }
 }

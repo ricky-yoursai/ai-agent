@@ -1,4 +1,4 @@
-from anthropic import Anthropic
+from anthropic import AsyncAnthropic
 
 from . import mcp, tools
 
@@ -6,9 +6,10 @@ TOOL_NAMES = tools.TOOL_NAMES
 
 
 class MCPAgent:
-    def __init__(self, api_key: str, base_url: str, model: str = "deepseek-v4-pro"):
-        self.client = Anthropic(api_key=api_key, base_url=base_url)
+    def __init__(self, api_key: str, base_url: str, model: str = "deepseek-v4-pro", system_prompt: str | None = None):
+        self.client = AsyncAnthropic(api_key=api_key, base_url=base_url)
         self.model = model
+        self.system_prompt = system_prompt
         self.servers: dict[str, dict] = {}
         self._cleaners: list = []
 
@@ -61,22 +62,22 @@ class MCPAgent:
         all_tools = self.get_all_tools()
 
         while True:
-            res = self.client.messages.create(
+            res = await self.client.messages.create(
                 model=self.model,
                 max_tokens=4096,
+                system=self.system_prompt,
                 tools=all_tools,
                 messages=messages,
             )
 
             if res.stop_reason == "tool_use":
                 messages.append({"role": "assistant", "content": res.content})
+                results = []
                 for block in res.content:
                     if block.type == "tool_use":
                         result = await self._execute_tool(block.name, block.input)
-                        messages.append({
-                            "role": "user",
-                            "content": [{"type": "tool_result", "tool_use_id": block.id, "content": str(result)}],
-                        })
+                        results.append({"type": "tool_result", "tool_use_id": block.id, "content": str(result)})
+                messages.append({"role": "user", "content": results})
             else:
                 return "".join(b.text for b in res.content if b.type == "text") or "(无文本回复)"
 

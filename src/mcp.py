@@ -1,4 +1,5 @@
 import json
+import os
 from collections.abc import Callable
 from pathlib import Path
 
@@ -41,10 +42,15 @@ async def connect_server(name: str, cfg: dict) -> dict | None:
         print(f"  [..] {name}: 不支持的连接类型 '{cfg.get('type')}'")
         return None
 
+    # Merge full parent env + config-specific overrides.
+    # MCP SDK's get_default_environment() uses a whitelist that drops
+    # custom vars (MYSQL_HOST, etc.), so we pass os.environ explicitly.
+    server_env = cfg.get("env") or {}
+
     params = StdioServerParameters(
         command=cfg["command"],
         args=cfg.get("args", []),
-        env=cfg.get("env"),
+        env={**os.environ, **server_env},
     )
 
     streams_cm = stdio_client(params)

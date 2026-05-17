@@ -1,3 +1,14 @@
 {
-  "servers": {}
+  "servers": {
+    "mysql": {
+      "type": "stdio",
+      "command": ".\\env\\Scripts\\python",
+      "args": ["scripts\\mysql_mcp_server.py"]
+    },
+    "browser": {
+      "type": "stdio",
+      "command": ".\\env\\Scripts\\python",
+      "args": ["scripts\\browser_mcp_server.py"]
+    }
+  }
 }

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YoursAI 超级助手</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f0f2f5;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .container {
+    width: 800px;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    box-shadow: 0 0 40px rgba(0,0,0,.08);
+  }
+  header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e8e8e8;
+    background: #fff;
+  }
+  header h1 { font-size: 18px; color: #1a1a1a; }
+  header p { font-size: 13px; color: #888; margin-top: 2px; }
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; line-height: 1.6; font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+  .msg.user { background: #1a73e8; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msg.assistant { background: #f0f2f5; color: #1a1a1a; align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msg.assistant table { border-collapse: collapse; margin: 8px 0; font-size: 13px; width: 100%; }
+  .msg.assistant th, .msg.assistant td { border: 1px solid #d0d0d0; padding: 6px 10px; text-align: left; }
+  .msg.assistant th { background: #e8e8e8; font-weight: 600; }
+  .msg.assistant code { background: #e8e8e8; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+  .msg.assistant pre { background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 13px; margin: 8px 0; }
+  .input-area { display: flex; gap: 8px; padding: 16px 24px; border-top: 1px solid #e8e8e8; background: #fff; }
+  .input-area input { flex: 1; padding: 10px 16px; border: 1px solid #d0d0d0; border-radius: 24px; outline: none; font-size: 14px; }
+  .input-area input:focus { border-color: #1a73e8; }
+  .input-area button { padding: 10px 24px; background: #1a73e8; color: #fff; border: none; border-radius: 24px; cursor: pointer; font-size: 14px; }
+  .input-area button:disabled { opacity: .5; cursor: not-allowed; }
+  .typing { color: #888; font-size: 13px; padding: 0 24px 12px; }
+  .empty { flex: 1; display: flex; align-items: center; justify-content: center; color: #bbb; font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>YoursAI 超级助手</h1>
+    <p>DeepSeek × MySQL MCP — 数据库查询与分析</p>
+  </header>
+
+  <div id="chat">
+    <div class="empty">输入问题开始聊天</div>
+  </div>
+
+  <div id="typing" class="typing" style="display:none">🤖 正在思考...</div>
+
+  <div class="input-area">
+    <input id="input" type="text" placeholder="输入你的问题..." autofocus>
+    <button id="send">发送</button>
+  </div>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const send = document.getElementById('send');
+const typing = document.getElementById('typing');
+let ws = null;
+let waiting = false;
+
+function connect() {
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${protocol}//${location.host}/chat`);
+
+  ws.onmessage = (e) => {
+    waiting = false;
+    typing.style.display = 'none';
+    removeEmpty();
+    addMsg('assistant', e.data);
+    input.disabled = false;
+    send.disabled = false;
+    input.focus();
+  };
+
+  ws.onclose = () => {
+    if (waiting) {
+      waiting = false;
+      typing.style.display = 'none';
+      addMsg('assistant', '⚠ 连接已断开，请刷新页面');
+    }
+    setTimeout(connect, 2000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+function removeEmpty() {
+  const empty = chat.querySelector('.empty');
+  if (empty) empty.remove();
+}
+
+function addMsg(role, text) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function sendMsg() {
+  const text = input.value.trim();
+  if (!text || waiting) return;
+  input.value = '';
+  removeEmpty();
+  addMsg('user', text);
+  waiting = true;
+  typing.style.display = 'block';
+  input.disabled = true;
+  send.disabled = true;
+  ws.send(text);
+}
+
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMsg(); });
+send.addEventListener('click', sendMsg);
+
+connect();
+</script>
+</body>
+</html>
